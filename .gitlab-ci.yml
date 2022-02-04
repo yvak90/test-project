@@ -23,3 +23,5 @@ build:
 
 stages:
   - build
+  - deploy
+  - test
