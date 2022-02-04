@@ -1,0 +1,25 @@
+image: docker:19.03.1
+
+services:
+  - docker:19.03.1-dind
+
+before_script:
+  - docker info
+  - apk add --no-cache curl jq python py-pip python-dev libffi-dev openssl-dev gcc libc-dev make
+  - pip install awscli
+  - /bin/sh ./setupEnv.sh > npmrc
+
+build:
+  stage: build
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.gitlab.com
+    - docker build -t registry.gitlab.com/omg-technology/adylic/orca-frontend:$CI_COMMIT_TAG .
+    - docker push registry.gitlab.com/omg-technology/adylic/orca-frontend:$CI_COMMIT_TAG
+    - aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 495653373833.dkr.ecr.eu-west-1.amazonaws.com/orca-frontend
+    - docker build -t 495653373833.dkr.ecr.eu-west-1.amazonaws.com/orca-frontend:$CI_COMMIT_TAG .
+    - docker push 495653373833.dkr.ecr.eu-west-1.amazonaws.com/orca-frontend:$CI_COMMIT_TAG
+  only:
+    - tags
+
+stages:
+  - build
